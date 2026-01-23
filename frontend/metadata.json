@@ -1,0 +1,5 @@
+{
+  "name": "BoltLink Platform",
+  "description": "High-performance distributed URL shortener with real-time analytics, custom aliases, and system health monitoring.",
+  "requestFramePermissions": []
+}
