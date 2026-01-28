@@ -66,7 +66,7 @@ const LinkCreator: React.FC = () => {
     const generateQR = async () => {
       setIsLoadingQR(true);
       try {
-        const actualShortUrl = `http://localhost:5000/${createdShortCode}`;
+        const actualShortUrl = `${window.location.origin}/${createdShortCode}`;
         const qr = await generateQRCode(actualShortUrl, {
           fgColor: '#0f172a',
           bgColor: '#ffffff',
@@ -181,7 +181,7 @@ const LinkCreator: React.FC = () => {
       setCreatedShortCode(link.shortCode);
       setSuccessMessage(`✅ Link created! Short code: ${link.shortCode}`);
 
-      const actualShortUrl = `http://localhost:5000/${link.shortCode}`;
+      const actualShortUrl = `${window.location.origin}/${link.shortCode}`;
       const qr = await generateQRCode(actualShortUrl, {
         fgColor: '#0f172a',
         bgColor: '#ffffff',
@@ -730,18 +730,18 @@ const LinkCreator: React.FC = () => {
                   </p>
                   <div className='bg-gradient-to-r from-blue-900 to-slate-900 border-2 border-blue-500/50 rounded-xl p-4 flex items-center justify-between group hover:border-blue-500/80 transition-all shadow-lg'>
                     <code className='text-blue-300 font-mono text-sm font-bold break-all'>
-                      http://localhost:5000/{createdShortCode}
+                      `${window.location.origin}/{createdShortCode}`
                     </code>
                     <button
                       onClick={() =>
                         copyToClipboard(
-                          `http://localhost:5000/${createdShortCode}`,
+                          `${window.location.origin}/${createdShortCode}`,
                         )
                       }
                       className='text-slate-400 hover:text-white ml-3 transition-colors flex-shrink-0'
                     >
                       {copiedCode ===
-                      `http://localhost:5000/${createdShortCode}` ? (
+                      `${window.location.origin}/${createdShortCode}` ? (
                         <Check className='w-5 h-5 text-green-400' />
                       ) : (
                         <Copy className='w-5 h-5' />
@@ -786,7 +786,7 @@ const LinkCreator: React.FC = () => {
               </button>
               <button
                 onClick={() => {
-                  const url = `http://localhost:5000/${createdShortCode}`;
+                  const url = `${window.location.origin}/${createdShortCode}`;
                   window.open(url, '_blank');
                 }}
                 className='bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-xl shadow-green-900/40 flex-1 sm:flex-none'

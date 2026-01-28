@@ -31,7 +31,7 @@ const PasswordVerification: React.FC = () => {
 
     try {
       const response = await fetch(
-        `${(import.meta.env.VITE_API_URL as string) || 'http://localhost:5000'}/${code}?password=${encodeURIComponent(
+        `${import.meta.env.VITE_API_URL}/${code}?password=${encodeURIComponent(\
           password,
         )}`,
         {

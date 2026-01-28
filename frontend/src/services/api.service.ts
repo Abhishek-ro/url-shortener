@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const apiService = axios.create({
   baseURL: API_BASE_URL,
@@ -82,7 +82,7 @@ apiService.interceptors.response.use(
       }
     } else if (error.code === 'ERR_NETWORK') {
       console.error(
-        '❌ Network error - backend may not be running on localhost:5000',
+        '❌ Network error - backend may not be running or accessible from this origin',
       );
     }
 

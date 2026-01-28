@@ -25,11 +25,14 @@ const Verify: React.FC = () => {
     try {
       console.log('🔐 Submitting password for code:', code);
 
-      const response = await fetch(`http://localhost:5000/api/verify/${code}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/verify/${code}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password }),
+        },
+      );
 
       console.log('Response status:', response.status);
 
@@ -50,7 +53,8 @@ const Verify: React.FC = () => {
         setError('⏰ ' + data.error);
       } else if (response.status === 429) {
         console.log('Rate limit hit');
-        window.location.href = 'http://localhost:3000/rate-limit?code=' + code;
+        window.location.href =
+          `${window.location.origin}/rate-limit?code=` + code;
         return;
       } else {
         const data = await response.json();
