@@ -18,19 +18,16 @@ export async function scrapeMetadata(url: string): Promise<Metadata> {
     const html = response.data;
     const $ = cheerio.load(html);
 
-    // Title
     const title =
       $('meta[property="og:title"]').attr('content') ||
       $('title').text() ||
       null;
 
-    // Description
     const description =
       $('meta[property="og:description"]').attr('content') ||
       $('meta[name="description"]').attr('content') ||
       null;
 
-    // Favicon
     const favicon =
       $('link[rel="icon"]').attr('href') ||
       $('link[rel="shortcut icon"]').attr('href') ||

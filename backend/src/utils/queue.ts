@@ -7,17 +7,27 @@ export async function pushAnalytics(event: {
   region: string;
   userAgent: string | null;
 }) {
-  await redis.lPush(ANALYTICS_QUEUE, JSON.stringify(event));
+  try {
+    await redis.lPush(ANALYTICS_QUEUE, JSON.stringify(event));
+  } catch (err) {
+    // Redis unavailable, skip queuing (analytics will be lost but app continues)
+    console.warn('⚠️  Analytics event skipped - Redis unavailable');
+  }
 }
 
 export async function popAnalyticsBatch(batchSize = 100) {
-  const events: any[] = [];
+  try {
+    const events: any[] = [];
 
-  for (let i = 0; i < batchSize; i++) {
-    const item = await redis.rPop(ANALYTICS_QUEUE);
-    if (!item) break;
-    events.push(JSON.parse(item));
+    for (let i = 0; i < batchSize; i++) {
+      const item = await redis.rPop(ANALYTICS_QUEUE);
+      if (!item) break;
+      events.push(JSON.parse(item));
+    }
+
+    return events;
+  } catch (err) {
+    // Redis unavailable, return empty batch
+    return [];
   }
-
-  return events;
 }

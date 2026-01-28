@@ -2,68 +2,111 @@ import prisma from '../config/prisma';
 import { nanoid } from 'nanoid/async';
 import redis from '../config/redis';
 import { scrapeMetadata } from '../utils/metadata';
+import bcrypt from 'bcryptjs';
 
-
-export async function createShortLink(originalUrl: string) {
+export async function createShortLink(
+  originalUrl: string,
+  options?: {
+    userId?: string | null;
+    isProtected?: boolean;
+    password?: string | null;
+    isExpiring?: boolean;
+    expiresAt?: Date | null;
+    isRateLimited?: boolean;
+    maxClicksPerMin?: number;
+  },
+) {
   const shortCode = await nanoid(8);
 
   const meta = await scrapeMetadata(originalUrl);
 
+  // Hash password if provided
+  let hashedPassword = null;
+  if (options?.isProtected && options?.password) {
+    hashedPassword = await bcrypt.hash(options.password, 10);
+  }
+
   const link = await prisma.link.create({
     data: {
+      userId: options?.userId || null,
       originalUrl,
       shortCode,
       title: meta.title,
       description: meta.description,
       favicon: meta.favicon,
+      isProtected: options?.isProtected || false,
+      password: hashedPassword,
+      isExpiring: options?.isExpiring || false,
+      expiresAt: options?.expiresAt || null,
+      isRateLimited: options?.isRateLimited || false,
+      maxClicksPerMin: options?.maxClicksPerMin || 100,
     },
   });
 
   return link;
 }
 
-
 export async function findLinkByCode(code: string) {
-  // 1. Check Redis
   const cached = await redis.get(`link:${code}`);
 
   if (cached) {
     return JSON.parse(cached);
   }
 
-  // 2. Fallback to DB
   const link = await prisma.link.findUnique({
     where: { shortCode: code },
   });
 
   if (!link) return null;
 
-  // 3. Store in Redis for next time
   await redis.set(`link:${code}`, JSON.stringify(link), {
-    EX: 60 * 60, // cache for 1 hour
+    EX: 60 * 60,
   });
 
   return link;
 }
 
-
 export async function incrementClick(id: string) {
-  return prisma.link.update({
-    where: { id },
-    data: { clicks: { increment: 1 } },
-  });
+  // Fast atomic counter in Redis (O(1), non-blocking)
+  await redis.incr(`link:counter:${id}`);
+  // Mark link as dirty for aggregation (background job will persist)
+  await redis.sAdd('dirty_links', id);
+  // No DB write here — aggregator job batches these later
+  return;
 }
 
+export async function getRecentClicks(
+  linkId: string,
+  secondsBack: number = 60,
+): Promise<number> {
+  // Use Redis sliding window counter instead of expensive DB count
+  // Key: rate:<linkId>:<second> for granular sliding window
+  const now = Math.floor(Date.now() / 1000);
+  const windowStart = now - secondsBack;
 
-export async function getAllLinks() {
+  const keys = Array.from(
+    { length: secondsBack + 1 },
+    (_, i) => `rate:${linkId}:${windowStart + i}`,
+  );
+
+  const counts = await Promise.all(keys.map((k) => redis.get(k)));
+  const total = counts.reduce(
+    (sum, val) => sum + (parseInt(val || '0') || 0),
+    0,
+  );
+
+  return total;
+}
+
+export async function getAllLinks(limit = 100, offset = 0) {
   return prisma.link.findMany({
     orderBy: {
       createdAt: 'desc',
     },
+    take: limit,
+    skip: offset,
   });
 }
-
-
 
 export async function deleteLink(id: string) {
   await prisma.linkAnalytics.deleteMany({
@@ -90,7 +133,6 @@ export async function updateLink(
   });
 }
 
-
 export async function getTopLinks(limit = 10) {
   return prisma.link.findMany({
     orderBy: { clicks: 'desc' },
@@ -107,5 +149,3 @@ export async function getTopLinks(limit = 10) {
     },
   });
 }
-
-

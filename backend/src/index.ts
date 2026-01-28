@@ -3,22 +3,63 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import linkRoutes from './routes/link.routes';
 import { redirectUrl } from './controllers/link.controller';
-
+import prisma from './config/prisma';
 
 dotenv.config();
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
+app.use(
+  cors({
+    origin: (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(','),
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key'],
+    credentials: true,
+    maxAge: 3600,
+  }),
+);
+app.use(express.json({ limit: '10mb' }));
+
+// Security headers
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader(
+    'Strict-Transport-Security',
+    'max-age=31536000; includeSubDomains',
+  );
+  next();
+});
 
 app.get('/', (req, res) => {
   res.send('BoltLink Backend Running');
 });
 app.use('/api', linkRoutes);
 app.get('/:code', redirectUrl);
+
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
+
+// Graceful shutdown
+const gracefulShutdown = async () => {
+  console.log('🛑 Shutting down gracefully...');
+  server.close(async () => {
+    console.log('📤 Server closed');
+    await prisma.$disconnect();
+    console.log('🗄️  Prisma disconnected');
+    process.exit(0);
+  });
+
+  // Force exit after 10 seconds
+  setTimeout(() => {
+    console.error('❌ Forced shutdown after 10s');
+    process.exit(1);
+  }, 10000);
+};
+
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);

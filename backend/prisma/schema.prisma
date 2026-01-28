@@ -7,17 +7,61 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  password        String
+  name            String?
+  avatar          String?
+  role            String   @default("user")
+  
+  isPrivate       Boolean  @default(false)
+  allowPublicView Boolean  @default(true)
+  
+  links           Link[]
+  analytics       UserAnalytics[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
 model Link {
-  id          String   @id @default(cuid())
-  originalUrl String
-  shortCode   String   @unique
-  clicks      Int      @default(0)
-  title       String?
-  description String?
-  favicon     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  analytics   LinkAnalytics[]
+  id              String   @id @default(cuid())
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  originalUrl     String
+  shortCode       String   @unique
+  clicks          Int      @default(0)
+  title           String?
+  description     String?
+  favicon         String?
+  
+  isProtected     Boolean  @default(false)
+  password        String?
+  isExpiring      Boolean  @default(false)
+  expiresAt       DateTime?
+  isRateLimited   Boolean  @default(false)
+  maxClicksPerMin Int?     @default(100)
+  
+  campaignId      String?
+  campaign        Campaign?  @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  analytics       LinkAnalytics[]
+  clickEvents     ClickEvent[]
+}
+
+model Campaign {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  links           Link[]
 }
 
 
@@ -34,6 +78,17 @@ model LinkAnalytics {
   @@index([timestamp])
 }
 
+model UserAnalytics {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  timestamp DateTime @default(now())
+  totalClicks Int     @default(0)
+  
+  @@index([userId])
+  @@index([timestamp])
+}
+
 model ApiKey {
   id        String   @id @default(cuid())
   key       String   @unique
@@ -45,4 +100,6 @@ model ClickEvent {
   linkId    String
   link      Link     @relation(fields: [linkId], references: [id])
   createdAt DateTime @default(now())
+
+  @@index([linkId, createdAt])
 }

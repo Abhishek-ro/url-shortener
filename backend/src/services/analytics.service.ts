@@ -11,8 +11,8 @@ export async function getAnalyticsForCode(shortCode: string) {
 
   const totalClicks = link.analytics.length;
 
+  // Daily clicks aggregation
   const dailyClicksMap: Record<string, number> = {};
-
   link.analytics.forEach((event) => {
     const day = event.timestamp.toISOString().slice(0, 10);
     dailyClicksMap[day] = (dailyClicksMap[day] || 0) + 1;
@@ -23,37 +23,60 @@ export async function getAnalyticsForCode(shortCode: string) {
     count,
   }));
 
+  // Region analysis
   const regionMap: Record<string, number> = {};
   link.analytics.forEach((event) => {
     const region = event.region ?? 'UNKNOWN';
     regionMap[region] = (regionMap[region] || 0) + 1;
   });
 
-  const regions = Object.entries(regionMap).map(([region, count]) => ({
-    region,
-    count,
-  }));
+  const regions = Object.entries(regionMap)
+    .sort((a, b) => b[1] - a[1])
+    .map(([region, count]) => ({
+      region,
+      count,
+      percentage: ((count / (totalClicks || 1)) * 100).toFixed(1),
+    }));
 
+  const topRegion = regions[0]?.region || 'UNKNOWN';
+
+  // Device/UserAgent analysis
   const deviceMap: Record<string, number> = {};
   link.analytics.forEach((event) => {
     const ua = event.userAgent ?? 'UNKNOWN';
     deviceMap[ua] = (deviceMap[ua] || 0) + 1;
   });
 
-  const devices = Object.entries(deviceMap).map(([userAgent, count]) => ({
-    userAgent,
-    count,
+  const devices = Object.entries(deviceMap)
+    .sort((a, b) => b[1] - a[1])
+    .map(([userAgent, count]) => ({
+      userAgent,
+      count,
+    }));
+
+  const topDevice = devices[0]?.userAgent || 'UNKNOWN';
+
+  // Transform daily clicks to match the points format expected by frontend
+  const points = dailyClicks.map((dc) => ({
+    timestamp: dc.date,
+    clicks: dc.count,
+    region: topRegion,
   }));
 
   return {
+    summary: {
+      totalClicks,
+      topRegion,
+      topDevice,
+      avgLatency: 14, // Could be calculated from more detailed metrics if available
+      conversionRate: 0, // Would need more context to calculate properly
+    },
+    points,
+    topRegions: regions,
     shortCode,
     originalUrl: link.originalUrl,
     title: link.title,
     favicon: link.favicon,
-    totalClicks,
-    dailyClicks,
-    regions,
-    devices,
   };
 }
 

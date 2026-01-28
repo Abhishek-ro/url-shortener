@@ -2,7 +2,6 @@ import rateLimit from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
 import redis from '../config/redis';
 
-// 50 shorten requests per minute per IP
 export const shortenLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 50,
@@ -14,7 +13,6 @@ export const shortenLimiter = rateLimit({
   message: { error: 'Too many shorten requests. Slow down.' },
 });
 
-// 100 redirects per minute per IP (normal traffic)
 export const redirectLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 100,

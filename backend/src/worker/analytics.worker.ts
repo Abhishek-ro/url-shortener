@@ -19,7 +19,6 @@ async function startWorker() {
       });
     }
 
-    // prevent CPU burn
     await new Promise((res) => setTimeout(res, 200));
   }
 }
