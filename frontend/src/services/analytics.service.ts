@@ -1,16 +1,10 @@
-import { analyticsMock } from '../data/analytics.mock';
+import apiService from './api.service';
 import { AnalyticsResponse } from '../types/analytics';
 
-/**
- * Fetches platform-wide analytics data.
- * Simulates an asynchronous API call with a 750ms delay.
- * 
- * @returns {Promise<AnalyticsResponse>}
- */
-export const getAnalytics = (): Promise<AnalyticsResponse> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(analyticsMock);
-    }, 750);
-  });
+export const getAnalytics = async (
+  code?: string,
+): Promise<AnalyticsResponse> => {
+  const url = code ? `/analytics/${code}` : '/analytics/global';
+  const response = await apiService.get(url);
+  return response.data;
 };

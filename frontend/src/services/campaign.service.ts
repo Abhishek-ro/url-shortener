@@ -1,37 +1,41 @@
-import { campaignsMock } from '../data/campaigns.mock';
-import { Campaign } from '../types/campaign';
+import apiService from './api.service';
 
-/**
- * Fetches all marketing campaigns from the mock data source.
- * @returns {Promise<Campaign[]>}
- */
-export const getAllCampaigns = (): Promise<Campaign[]> => {
-  return new Promise((resolve) => {
-    // Simulate a backend delay
-    setTimeout(() => {
-      resolve([...campaignsMock]);
-    }, 700);
-  });
+export const getAllCampaigns = async () => {
+  const response = await apiService.get('/campaigns');
+  return response.data;
 };
 
-/**
- * Creates a new marketing campaign and adds it to the mock data source.
- * 
- * @param name - The name of the new campaign.
- * @returns {Promise<Campaign>}
- */
-export const createCampaign = (name: string): Promise<Campaign> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const newCampaign: Campaign = {
-        id: `CMP-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
-        name,
-        createdAt: new Date().toISOString(),
-        totalLinks: 0,
-        totalClicks: 0,
-      };
-      campaignsMock.unshift(newCampaign);
-      resolve(newCampaign);
-    }, 500);
+export const createCampaign = async (name: string, description?: string) => {
+  const response = await apiService.post('/campaigns', { name, description });
+  return response.data;
+};
+
+export const updateCampaign = async (
+  id: string,
+  name: string,
+  description?: string,
+) => {
+  const response = await apiService.patch(`/campaigns/${id}`, {
+    name,
+    description,
   });
+  return response.data;
+};
+
+export const deleteCampaign = async (id: string) => {
+  const response = await apiService.delete(`/campaigns/${id}`);
+  return response.data;
+};
+
+export const getCampaignById = async (id: string) => {
+  const response = await apiService.get(`/campaigns/${id}`);
+  return response.data;
+};
+
+export const addLinkToCampaign = async (campaignId: string, linkId: string) => {
+  const response = await apiService.post('/campaigns/link', {
+    campaignId,
+    linkId,
+  });
+  return response.data;
 };

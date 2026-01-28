@@ -1,0 +1,422 @@
+version: '3.9'
+
+# Docker Compose for BoltLink Local Development
+# Runs: 3 backend instances, nginx, PostgreSQL, Redis, Prometheus, Grafana
+
+services:
+  # ========== NGINX LOAD BALANCER ==========
+  nginx:
+    image: nginx:alpine
+    container_name: boltlink-nginx
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend1
+      - backend2
+      - backend3
+    networks:
+      - boltlink-network
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'wget',
+          '--quiet',
+          '--tries=1',
+          '--spider',
+          'http://localhost/health',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # ========== BACKEND INSTANCES ==========
+  backend1:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: boltlink-backend1
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/boltlink?schema=public
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=info
+      - INSTANCE_ID=backend-1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - boltlink-network
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'wget',
+          '--quiet',
+          '--tries=1',
+          '--spider',
+          'http://localhost:5000/health',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  backend2:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: boltlink-backend2
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/boltlink?schema=public
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=info
+      - INSTANCE_ID=backend-2
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - boltlink-network
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'wget',
+          '--quiet',
+          '--tries=1',
+          '--spider',
+          'http://localhost:5000/health',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  backend3:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: boltlink-backend3
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/boltlink?schema=public
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=info
+      - INSTANCE_ID=backend-3
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - boltlink-network
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'wget',
+          '--quiet',
+          '--tries=1',
+          '--spider',
+          'http://localhost:5000/health',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # ========== POSTGRESQL DATABASE ==========
+  postgres:
+    image: postgres:15-alpine
+    container_name: boltlink-postgres
+    environment:
+      - POSTGRES_DB=boltlink
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    networks:
+      - boltlink-network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # ========== REDIS CACHE ==========
+  redis:
+    image: redis:7-alpine
+    container_name: boltlink-redis
+    command: redis-server --appendonly yes --requirepass ""
+    volumes:
+      - redis_data:/data
+    ports:
+      - '6379:6379'
+    networks:
+      - boltlink-network
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # ========== PROMETHEUS MONITORING ==========
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: boltlink-prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - '9090:9090'
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - boltlink-network
+    depends_on:
+      - nginx
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'wget',
+          '--quiet',
+          '--tries=1',
+          '--spider',
+          'http://localhost:9090',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # ========== NGINX EXPORTER ==========
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: boltlink-nginx-exporter
+    environment:
+      SCRAPE_URI: http://nginx/nginx_status
+    ports:
+      - '4040:4040'
+    networks:
+      - boltlink-network
+    depends_on:
+      - nginx
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'wget',
+          '--quiet',
+          '--tries=1',
+          '--spider',
+          'http://localhost:4040/metrics',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    command: -nginx.scrape-uri=http://nginx/nginx_status -web.telemetry-path=/metrics -web.listen-address=:4040
+
+  # ========== REDIS EXPORTER ==========
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: boltlink-redis-exporter
+    environment:
+      REDIS_ADDR: redis://redis:6379
+    ports:
+      - '9121:9121'
+    networks:
+      - boltlink-network
+    depends_on:
+      - redis
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'wget',
+          '--quiet',
+          '--tries=1',
+          '--spider',
+          'http://localhost:9121/metrics',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    command: --redis-addr redis://redis:6379 --web.listen-address :9121
+
+  # ========== POSTGRES EXPORTER ==========
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: boltlink-postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: postgresql://postgres:postgres@postgres:5432/boltlink?sslmode=disable
+    ports:
+      - '9187:9187'
+    networks:
+      - boltlink-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'wget',
+          '--quiet',
+          '--tries=1',
+          '--spider',
+          'http://localhost:9187/metrics',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # ========== GRAFANA VISUALIZATION ==========
+  grafana:
+    image: grafana/grafana:latest
+    container_name: boltlink-grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana-dashboard.json:/etc/grafana/provisioning/dashboards/boltlink.json:ro
+    ports:
+      - '3000:3000'
+    networks:
+      - boltlink-network
+    depends_on:
+      - prometheus
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'wget',
+          '--quiet',
+          '--tries=1',
+          '--spider',
+          'http://localhost:3000/api/health',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # ========== NODE EXPORTER (System Metrics) ==========
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: boltlink-node-exporter
+    ports:
+      - '9100:9100'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      - boltlink-network
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'wget',
+          '--quiet',
+          '--tries=1',
+          '--spider',
+          'http://localhost:9100/metrics',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+networks:
+  boltlink-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local

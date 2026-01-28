@@ -1,39 +1,53 @@
-import { apiRequest } from './api.service';
+import apiService from './api.service';
 import { ShortLink } from '../types/link';
 
-// GET /links
 export const getAllLinks = async (): Promise<ShortLink[]> => {
-  return apiRequest('/links');
+  const response = await apiService.get('/links');
+  return response.data;
 };
 
-// POST /shorten
-export const createShortLink = async (url: string): Promise<ShortLink> => {
-  return apiRequest('/shorten', {
-    method: 'POST',
-    body: JSON.stringify({ originalUrl: url }),
+export const createShortLink = async (
+  url: string,
+  options?: {
+    isProtected?: boolean;
+    password?: string;
+    isExpiring?: boolean;
+    expiresAt?: string;
+    isRateLimited?: boolean;
+    maxClicksPerMin?: number;
+  },
+): Promise<ShortLink> => {
+  const response = await apiService.post('/shorten', {
+    url,
+    ...options,
   });
+  return response.data;
 };
 
-// PATCH /links/:id
 export const updateLink = async (
   id: string,
   updates: Partial<ShortLink>,
 ): Promise<ShortLink> => {
-  return apiRequest(`/links/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify(updates),
-  });
+  const response = await apiService.patch(`/links/${id}`, updates);
+  return response.data;
 };
 
-// DELETE /links/:id
 export const deleteLink = async (id: string): Promise<boolean> => {
-  await apiRequest(`/links/${id}`, {
-    method: 'DELETE',
-  });
+  await apiService.delete(`/links/${id}`);
   return true;
 };
 
-// GET /top-links
-export const getTopLinks = async (): Promise<ShortLink[]> => {
-  return apiRequest('/top-links');
+export const getTopLinks = async (limit: number = 10): Promise<ShortLink[]> => {
+  const response = await apiService.get(`/top-links?limit=${limit}`);
+  return response.data;
+};
+
+export const getLinkMetadata = async (url: string) => {
+  const response = await apiService.post('/metadata', { url });
+  return response.data;
+};
+
+export const getLinkAnalytics = async (code: string) => {
+  const response = await apiService.get(`/analytics/${code}`);
+  return response.data;
 };

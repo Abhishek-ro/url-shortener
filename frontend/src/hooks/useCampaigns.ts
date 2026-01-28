@@ -2,12 +2,6 @@ import { useState, useEffect } from 'react';
 import { getAllCampaigns, createCampaign } from '../services/campaign.service';
 import { Campaign } from '../types/campaign';
 
-/**
- * Custom hook to fetch and manage marketing campaign data.
- * Handles the asynchronous data fetching and provides loading state feedback.
- * 
- * @returns {{ campaigns: Campaign[], loading: boolean, addCampaign: (name: string) => Promise<void> }}
- */
 export const useCampaigns = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -40,7 +34,7 @@ export const useCampaigns = () => {
 
   async function addCampaign(name: string) {
     const newCamp = await createCampaign(name);
-    setCampaigns(prev => [newCamp, ...prev]);
+    setCampaigns((prev) => [newCamp, ...prev]);
   }
 
   return { campaigns, loading, addCampaign };

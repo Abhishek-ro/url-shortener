@@ -3,7 +3,11 @@ import { AnalyticsResponse } from '../types/analytics';
 export const analyticsMock: AnalyticsResponse = {
   summary: {
     totalClicks: 142850,
-    topRegion: 'US-EAST-1'
+    totalLinks: 45,
+    topRegion: 'US-EAST-1',
+    topDevice: 'Mozilla/5.0',
+    avgLatency: 14,
+    conversionRate: 3.8,
   },
   points: [
     { timestamp: '2024-03-21T08:00:00Z', clicks: 1240, region: 'US-EAST-1' },
@@ -16,7 +20,11 @@ export const analyticsMock: AnalyticsResponse = {
     { timestamp: '2024-03-21T09:45:00Z', clicks: 1200, region: 'SA-EAST-1' },
     { timestamp: '2024-03-21T10:00:00Z', clicks: 5600, region: 'US-EAST-1' },
     { timestamp: '2024-03-21T10:15:00Z', clicks: 4800, region: 'EU-CENTRAL-1' },
-    { timestamp: '2024-03-21T10:30:00Z', clicks: 3200, region: 'AP-NORTHEAST-1' },
+    {
+      timestamp: '2024-03-21T10:30:00Z',
+      clicks: 3200,
+      region: 'AP-NORTHEAST-1',
+    },
     { timestamp: '2024-03-21T10:45:00Z', clicks: 2100, region: 'US-EAST-1' },
     { timestamp: '2024-03-21T11:00:00Z', clicks: 1500, region: 'US-WEST-1' },
     { timestamp: '2024-03-21T11:15:00Z', clicks: 900, region: 'EU-WEST-1' },
@@ -26,10 +34,22 @@ export const analyticsMock: AnalyticsResponse = {
     { timestamp: '2024-03-21T12:15:00Z', clicks: 5200, region: 'EU-WEST-2' },
     { timestamp: '2024-03-21T12:30:00Z', clicks: 4100, region: 'US-EAST-1' },
     { timestamp: '2024-03-21T12:45:00Z', clicks: 3800, region: 'US-WEST-2' },
-    { timestamp: '2024-03-21T13:00:00Z', clicks: 2900, region: 'AP-SOUTHEAST-1' },
+    {
+      timestamp: '2024-03-21T13:00:00Z',
+      clicks: 2900,
+      region: 'AP-SOUTHEAST-1',
+    },
     { timestamp: '2024-03-21T13:15:00Z', clicks: 1800, region: 'EU-CENTRAL-1' },
     { timestamp: '2024-03-21T13:30:00Z', clicks: 2400, region: 'US-EAST-1' },
     { timestamp: '2024-03-21T13:45:00Z', clicks: 3300, region: 'SA-EAST-1' },
-    { timestamp: '2024-03-21T14:00:00Z', clicks: 4000, region: 'US-EAST-1' }
-  ]
+    { timestamp: '2024-03-21T14:00:00Z', clicks: 4000, region: 'US-EAST-1' },
+  ],
+  topRegions: [
+    { region: 'US-EAST-1', clicks: 45000, percentage: '31.5' },
+    { region: 'EU-WEST-2', clicks: 28000, percentage: '19.6' },
+    { region: 'AP-SOUTH-1', clicks: 25000, percentage: '17.5' },
+    { region: 'US-WEST-2', clicks: 22000, percentage: '15.4' },
+    { region: 'EU-CENTRAL-1', clicks: 22850, percentage: '16.0' },
+  ],
+  lastUpdated: new Date().toISOString(),
 };

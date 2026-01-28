@@ -1,0 +1,188 @@
+{
+  "dashboard": {
+    "title": "BoltLink Cluster Monitoring",
+    "tags": ["boltlink", "production", "cluster"],
+    "timezone": "UTC",
+    "panels": [
+      {
+        "title": "Cluster Status Overview",
+        "type": "stat",
+        "gridPos": { "h": 3, "w": 6, "x": 0, "y": 0 },
+        "targets": [
+          {
+            "expr": "count(up{job=\"backend-instances\"} == 1)",
+            "legendFormat": "Healthy Backends"
+          }
+        ]
+      },
+      {
+        "title": "Request Rate (All Backends)",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 3 },
+        "targets": [
+          {
+            "expr": "sum(rate(nginx_requests_total[1m]))",
+            "legendFormat": "Total Requests/sec"
+          }
+        ]
+      },
+      {
+        "title": "Error Rate",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 3 },
+        "targets": [
+          {
+            "expr": "sum(rate(nginx_requests_total{status=~\"5..\"}[1m]))",
+            "legendFormat": "5xx Errors/sec"
+          }
+        ]
+      },
+      {
+        "title": "Response Time P95",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 11 },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, http_request_duration_seconds_bucket)",
+            "legendFormat": "{{ instance }}"
+          }
+        ]
+      },
+      {
+        "title": "Backend CPU Usage",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 11 },
+        "targets": [
+          {
+            "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) by (instance) * 100)",
+            "legendFormat": "{{ instance }}"
+          }
+        ]
+      },
+      {
+        "title": "Backend Memory Usage",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 19 },
+        "targets": [
+          {
+            "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) by (instance) * 100",
+            "legendFormat": "{{ instance }}"
+          }
+        ]
+      },
+      {
+        "title": "Rate Limiting - Requests Blocked",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 19 },
+        "targets": [
+          {
+            "expr": "sum(rate(nginx_limiting_requests_total[1m])) by (zone)",
+            "legendFormat": "{{ zone }}"
+          }
+        ]
+      },
+      {
+        "title": "Nginx Upstream Health",
+        "type": "table",
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 27 },
+        "targets": [
+          {
+            "expr": "nginx_upstream_requests_total",
+            "format": "table"
+          }
+        ]
+      },
+      {
+        "title": "Redis Memory Usage",
+        "type": "gauge",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 35 },
+        "targets": [
+          {
+            "expr": "(redis_memory_used_bytes / redis_memory_max_bytes) * 100",
+            "legendFormat": "Redis Memory %"
+          }
+        ]
+      },
+      {
+        "title": "Database Connections",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 35 },
+        "targets": [
+          {
+            "expr": "pg_stat_activity_count",
+            "legendFormat": "Active Connections"
+          }
+        ]
+      },
+      {
+        "title": "Database Replication Lag",
+        "type": "stat",
+        "gridPos": { "h": 3, "w": 6, "x": 0, "y": 43 },
+        "targets": [
+          {
+            "expr": "pg_replication_lag_seconds",
+            "legendFormat": "Replica Lag (seconds)"
+          }
+        ]
+      },
+      {
+        "title": "Disk Space Available",
+        "type": "stat",
+        "gridPos": { "h": 3, "w": 6, "x": 6, "y": 43 },
+        "targets": [
+          {
+            "expr": "node_filesystem_avail_bytes{fstype=~\"ext4|xfs\"}",
+            "legendFormat": "{{ instance }}"
+          }
+        ]
+      },
+      {
+        "title": "Alerts Firing",
+        "type": "stat",
+        "gridPos": { "h": 3, "w": 6, "x": 12, "y": 43 },
+        "targets": [
+          {
+            "expr": "count(ALERTS{alertstate=\"firing\"})",
+            "legendFormat": "Active Alerts"
+          }
+        ]
+      },
+      {
+        "title": "Cache Hit Rate",
+        "type": "stat",
+        "gridPos": { "h": 3, "w": 6, "x": 18, "y": 43 },
+        "targets": [
+          {
+            "expr": "redis_keyspace_hits_total / (redis_keyspace_hits_total + redis_keyspace_misses_total) * 100",
+            "legendFormat": "Hit Rate %"
+          }
+        ]
+      }
+    ],
+    "templating": {
+      "list": [
+        {
+          "name": "instance",
+          "type": "query",
+          "datasource": "Prometheus",
+          "query": "label_values(up{job=\"backend-instances\"}, instance)",
+          "multi": true,
+          "refresh": 1
+        },
+        {
+          "name": "zone",
+          "type": "query",
+          "datasource": "Prometheus",
+          "query": "label_values(nginx_limiting_requests_total, zone)",
+          "multi": true,
+          "refresh": 1
+        }
+      ]
+    },
+    "refresh": "10s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    }
+  }
+}

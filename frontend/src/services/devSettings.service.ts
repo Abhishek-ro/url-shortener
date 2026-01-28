@@ -1,17 +1,11 @@
-import { devSettingsMock } from '../data/devSettings.mock';
+import apiService from './api.service';
 import { DeveloperSettings } from '../types/devSettings';
 
-/**
- * Fetches developer-specific settings including API keys and webhook configurations.
- * Simulates a secure backend retrieval with network latency.
- * 
- * @returns {Promise<DeveloperSettings>}
- */
-export const getDeveloperSettings = (): Promise<DeveloperSettings> => {
-  return new Promise((resolve) => {
-    // Simulate API retrieval delay
-    setTimeout(() => {
-      resolve({ ...devSettingsMock });
-    }, 550);
-  });
+export const getDeveloperSettings = async (): Promise<DeveloperSettings> => {
+  const response = await apiService.get('/settings/developer');
+  return response.data;
+};
+
+export const updateWebhookUrl = async (url: string): Promise<void> => {
+  await apiService.patch('/settings/developer/webhook', { url });
 };

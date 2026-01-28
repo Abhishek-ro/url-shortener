@@ -1,4 +1,3 @@
-
 export interface Link {
   id: string;
   originalUrl: string;
@@ -46,12 +45,13 @@ export interface ShardStatus {
 }
 
 export enum View {
-  DASHBOARD = 'DASHBOARD',
-  LINKS = 'LINKS',
-  CAMPAIGNS = 'CAMPAIGNS',
-  ANALYTICS = 'ANALYTICS',
-  ALERTS = 'ALERTS',
-  SETTINGS = 'SETTINGS',
-  DEVELOPER = 'DEVELOPER',
-  SYSTEM_HEALTH = 'SYSTEM_HEALTH'
+  DASHBOARD = 'dashboard',
+  LINKS = 'links',
+  CAMPAIGNS = 'campaigns',
+  ANALYTICS = 'analytics',
+  ALERTS = 'alerts',
+  SYSTEM_HEALTH = 'system_health',
+  DEVELOPER = 'developer',
+  SETTINGS = 'settings',
+  LOGIN = 'login',
 }

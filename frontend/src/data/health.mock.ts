@@ -7,6 +7,7 @@ export const healthMock: SystemHealth[] = [
     uptime: 99.99,
     cpu: 42,
     memory: 65,
+    latency: 12,
   },
   {
     region: 'US-WEST-2 (Oregon)',
@@ -14,6 +15,7 @@ export const healthMock: SystemHealth[] = [
     uptime: 99.98,
     cpu: 38,
     memory: 58,
+    latency: 18,
   },
   {
     region: 'EU-WEST-1 (Ireland)',
@@ -21,6 +23,7 @@ export const healthMock: SystemHealth[] = [
     uptime: 98.45,
     cpu: 89,
     memory: 92,
+    latency: 42,
   },
   {
     region: 'AP-SOUTHEAST-1 (Singapore)',
@@ -28,13 +31,15 @@ export const healthMock: SystemHealth[] = [
     uptime: 99.95,
     cpu: 25,
     memory: 44,
+    latency: 25,
   },
   {
     region: 'SA-EAST-1 (São Paulo)',
     status: 'healthy',
-    uptime: 99.90,
+    uptime: 99.9,
     cpu: 31,
     memory: 52,
+    latency: 32,
   },
   {
     region: 'AF-SOUTH-1 (Cape Town)',
@@ -42,6 +47,7 @@ export const healthMock: SystemHealth[] = [
     uptime: 0,
     cpu: 0,
     memory: 0,
+    latency: 999,
   },
   {
     region: 'ME-SOUTH-1 (Bahrain)',
@@ -49,6 +55,7 @@ export const healthMock: SystemHealth[] = [
     uptime: 99.97,
     cpu: 18,
     memory: 35,
+    latency: 28,
   },
   {
     region: 'EU-CENTRAL-1 (Frankfurt)',
@@ -56,5 +63,6 @@ export const healthMock: SystemHealth[] = [
     uptime: 99.99,
     cpu: 55,
     memory: 70,
+    latency: 15,
   },
 ];

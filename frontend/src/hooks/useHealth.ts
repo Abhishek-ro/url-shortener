@@ -1,41 +1,35 @@
-import { useState, useEffect } from "react";
-import { getSystemHealth } from "../services/health.service";
-import { SystemHealth } from "../types/health";
+import { useState, useEffect } from 'react';
+import { getSystemHealth } from '../services/health.service';
+import { SystemHealth } from '../types/health';
 
-/**
- * Custom hook to manage the state and fetching of regional system health metrics.
- * 
- * @returns {{ health: SystemHealth[], loading: boolean }}
- */
 export const useHealth = () => {
   const [health, setHealth] = useState<SystemHealth[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
+  const fetchHealthData = async () => {
+    try {
+      const data = await getSystemHealth();
+      setHealth(data);
+    } catch (error) {
+      console.error('Error fetching system health data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchHealthData = async () => {
-      setLoading(true);
-      try {
-        const data = await getSystemHealth();
-        if (isMounted) {
-          setHealth(data);
-        }
-      } catch (error) {
-        console.error("Error fetching system health data:", error);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
     fetchHealthData();
-
-    return () => {
-      isMounted = false;
-    };
+    // Optional: Refresh health data every 30 seconds
+    const interval = setInterval(fetchHealthData, 30000);
+    return () => clearInterval(interval);
   }, []);
 
-  return { health, loading };
+  const globalLatency = health.length
+    ? Math.round(
+        health.reduce((acc, curr) => acc + (curr.latency || 0), 0) /
+          health.length,
+      )
+    : 0;
+
+  return { health, loading, globalLatency, refresh: fetchHealthData };
 };

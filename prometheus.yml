@@ -1,0 +1,127 @@
+# Prometheus Configuration for BoltLink Monitoring
+# Scrapes metrics from nginx, backends, Redis, and PostgreSQL
+
+global:
+  scrape_interval: 15s # How often to scrape targets
+  evaluation_interval: 15s # How often to evaluate rules
+  external_labels:
+    monitor: 'boltlink-monitor'
+    environment: 'development' # Change to 'production' for prod
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - localhost:9093 # Uncomment when Alertmanager is setup
+
+# Load rules once and periodically evaluate them
+rule_files:
+  - 'alert_rules.yml' # Alert rules (will create this next)
+
+# Scrape configurations
+scrape_configs:
+  # ========== PROMETHEUS SELF-MONITORING ==========
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # ========== NGINX EXPORTER - Load Balancer Metrics ==========
+  - job_name: 'nginx'
+    scrape_interval: 5s # Scrape nginx more frequently
+    static_configs:
+      - targets: ['localhost:4040'] # nginx_prometheus_exporter
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'nginx-lb'
+
+  # ========== BACKEND INSTANCES - Application Metrics ==========
+  - job_name: 'backend-instances'
+    scrape_interval: 10s
+    static_configs:
+      # Backend Instance 1
+      - targets: ['backend1.internal:9100']
+        labels:
+          instance: 'backend-1'
+          region: 'us-east-1'
+
+      # Backend Instance 2
+      - targets: ['backend2.internal:9100']
+        labels:
+          instance: 'backend-2'
+          region: 'us-east-1'
+
+      # Backend Instance 3
+      - targets: ['backend3.internal:9100']
+        labels:
+          instance: 'backend-3'
+          region: 'us-east-1'
+
+  # ========== NODE EXPORTER - System Metrics ==========
+  # Tracks CPU, memory, disk, network for each server
+  - job_name: 'node-exporter'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['localhost:9100'] # Local server
+        labels:
+          instance: 'monitor-server'
+      - targets: ['backend1.internal:9100']
+        labels:
+          instance: 'backend-1'
+      - targets: ['backend2.internal:9100']
+        labels:
+          instance: 'backend-2'
+      - targets: ['backend3.internal:9100']
+        labels:
+          instance: 'backend-3'
+
+  # ========== REDIS EXPORTER - Cache Metrics ==========
+  - job_name: 'redis'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['redis.internal:9121'] # redis_exporter
+        labels:
+          instance: 'redis-primary'
+
+  # ========== POSTGRESQL EXPORTER - Database Metrics ==========
+  - job_name: 'postgres'
+    scrape_interval: 30s # Less frequent (heavy query)
+    static_configs:
+      - targets: ['postgres.internal:9187'] # postgres_exporter
+        labels:
+          instance: 'postgres-primary'
+
+  # ========== CUSTOM APPLICATION METRICS (Optional) ==========
+  # If backend exposes /metrics endpoint
+  - job_name: 'boltlink-app'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['localhost:5000']
+    metrics_path: '/metrics'
+    relabel_configs:
+      - source_labels: [__scheme__, __address__, __metrics_path__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: localhost:8080
+
+  # ========== SERVICE DISCOVERY (For Kubernetes/Swarm - Optional) ==========
+  # Uncomment for automatic service discovery
+  # - job_name: 'kubernetes-pods'
+  #   kubernetes_sd_configs:
+  #     - role: pod
+  #   relabel_configs:
+  #     - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+  #       action: keep
+  #       regex: true
+  #     - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+  #       action: replace
+  #       target_label: __metrics_path__
+  #       regex: (.+)
+  #     - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+  #       action: replace
+  #       regex: ([^:]+)(?::\d+)?;(\d+)
+  #       replacement: $1:$2
+  #       target_label: __address__

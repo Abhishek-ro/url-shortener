@@ -1,0 +1,255 @@
+# Prometheus Alert Rules for BoltLink
+# Detects critical issues and sends alerts
+
+groups:
+  - name: boltlink_alerts
+    interval: 30s
+    rules:
+      # ========== NGINX / LOAD BALANCER ALERTS ==========
+
+      - alert: NginxDown
+        expr: up{job="nginx"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: load-balancer
+        annotations:
+          summary: 'Nginx load balancer is down'
+          description: 'Nginx has been unreachable for 1 minute'
+          dashboard: 'http://localhost:3000/d/nginx'
+
+      - alert: NginxHighErrorRate
+        expr: |
+          (sum(rate(nginx_requests_total{status=~"5.."}[5m]))
+           /
+           sum(rate(nginx_requests_total[5m])))
+          > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: load-balancer
+        annotations:
+          summary: 'Nginx error rate is high ({{ $value | humanizePercentage }})'
+          description: 'Nginx 5xx error rate exceeds 5% over 5 minutes'
+
+      - alert: NginxUpstreamDown
+        expr: nginx_upstream_requests_total{state="down"} > 0
+        for: 2m
+        labels:
+          severity: critical
+          component: backend
+        annotations:
+          summary: 'Backend server is down: {{ $labels.upstream }}'
+          description: 'Upstream {{ $labels.upstream }} has been marked as down'
+          dashboard: 'http://localhost:3000/d/nginx'
+
+      - alert: NginxHighRateLimiting
+        expr: |
+          (sum(rate(nginx_limiting_requests_total[5m])) by (zone)
+           /
+           sum(rate(nginx_requests_total[5m])) by (zone))
+          > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: load-balancer
+        annotations:
+          summary: 'High rate limiting in zone: {{ $labels.zone }}'
+          description: '{{ $value | humanizePercentage }} of requests are being rate limited'
+
+      # ========== BACKEND INSTANCE ALERTS ==========
+
+      - alert: BackendInstanceDown
+        expr: up{job="backend-instances"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: backend
+        annotations:
+          summary: 'Backend instance is down: {{ $labels.instance }}'
+          description: 'Backend {{ $labels.instance }} has been unreachable for 2 minutes'
+          dashboard: 'http://localhost:3000/d/backends'
+
+      - alert: BackendHighErrorRate
+        expr: |
+          (sum(rate(http_requests_total{status=~"5.."}[5m])) by (instance)
+           /
+           sum(rate(http_requests_total[5m])) by (instance))
+          > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: backend
+        annotations:
+          summary: 'Backend {{ $labels.instance }} has high error rate ({{ $value | humanizePercentage }})'
+          description: 'Error rate exceeds 10% - check backend logs'
+
+      - alert: BackendHighLatency
+        expr: histogram_quantile(0.95, http_request_duration_seconds_bucket) > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: backend
+        annotations:
+          summary: 'Backend {{ $labels.instance }} has high latency'
+          description: 'P95 latency is {{ $value }}s (>1s threshold)'
+
+      - alert: BackendHighMemoryUsage
+        expr: |
+          (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) < 0.2
+        for: 5m
+        labels:
+          severity: warning
+          component: backend
+        annotations:
+          summary: 'Backend {{ $labels.instance }} memory usage is high'
+          description: 'Available memory: {{ $value | humanizePercentage }}'
+
+      - alert: BackendHighCpuUsage
+        expr: |
+          (100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: backend
+        annotations:
+          summary: 'Backend {{ $labels.instance }} CPU usage is high'
+          description: 'CPU usage: {{ $value | humanize }}%'
+
+      # ========== REDIS / CACHE ALERTS ==========
+
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: cache
+        annotations:
+          summary: 'Redis is down'
+          description: 'Redis has been unreachable for 1 minute. Application will work in degraded mode.'
+          dashboard: 'http://localhost:3000/d/redis'
+
+      - alert: RedisHighMemoryUsage
+        expr: |
+          (redis_memory_used_bytes / redis_memory_max_bytes) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: 'Redis memory usage is high'
+          description: 'Redis memory: {{ $value | humanizePercentage }}'
+
+      - alert: RedisHighEvictionRate
+        expr: rate(redis_evicted_keys_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: 'Redis is evicting keys'
+          description: 'Redis eviction rate: {{ $value | humanize }} keys/sec (increase maxmemory)'
+
+      # ========== POSTGRESQL / DATABASE ALERTS ==========
+
+      - alert: PostgresDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: 'PostgreSQL is down'
+          description: 'PostgreSQL has been unreachable for 1 minute'
+          dashboard: 'http://localhost:3000/d/postgres'
+
+      - alert: PostgresHighConnectionUsage
+        expr: |
+          (pg_stat_activity_count / pg_settings_max_connections) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: 'PostgreSQL connection pool nearly exhausted'
+          description: 'Active connections: {{ $value | humanizePercentage }}'
+
+      - alert: PostgresSlowQueries
+        expr: |
+          pg_slow_queries > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: 'PostgreSQL has slow queries'
+          description: 'Slow query count: {{ $value }}'
+
+      - alert: PostgresReplicationLag
+        expr: pg_replication_lag_seconds > 5
+        for: 2m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: 'PostgreSQL replication lag is high'
+          description: 'Replica lag: {{ $value }}s (>5s threshold)'
+
+      # ========== CLUSTER HEALTH ALERTS ==========
+
+      - alert: TooFewBackendInstances
+        expr: count(up{job="backend-instances"} == 1) < 2
+        for: 3m
+        labels:
+          severity: critical
+          component: cluster
+        annotations:
+          summary: 'Less than 2 backend instances are healthy'
+          description: 'Only {{ $value }} backend(s) available. Target: 3'
+          dashboard: 'http://localhost:3000/d/cluster-health'
+
+      - alert: AllBackendInstancesDown
+        expr: count(up{job="backend-instances"} == 1) == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: cluster
+        annotations:
+          summary: 'ALL backend instances are down!'
+          description: 'No healthy backend instances available. Users cannot access the service.'
+
+      - alert: HighErrorRateCluster
+        expr: |
+          (sum(rate(http_requests_total{status=~"5.."}[5m]))
+           /
+           sum(rate(http_requests_total[5m])))
+          > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          component: cluster
+        annotations:
+          summary: 'Cluster-wide error rate is high'
+          description: 'Error rate: {{ $value | humanizePercentage }}'
+
+      - alert: DiskSpaceRunningOut
+        expr: |
+          (node_filesystem_avail_bytes{fstype=~"ext4|xfs"} / node_filesystem_size_bytes) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: 'Disk space running out on {{ $labels.instance }}'
+          description: 'Available: {{ $value | humanizePercentage }}'
+
+      - alert: NetworkErrorsHigh
+        expr: |
+          rate(node_network_receive_errs_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: 'High network errors on {{ $labels.instance }}'
+          description: 'Network receive errors: {{ $value | humanize }}/sec'
