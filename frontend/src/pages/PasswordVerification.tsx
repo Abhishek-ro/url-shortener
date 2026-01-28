@@ -30,12 +30,12 @@ const PasswordVerification: React.FC = () => {
     setLoading(true);
 
     try {
-              const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/${code}?password=${encodeURIComponent(
-                  password,
-                )}`,
-                { method: 'POST' },
-              );
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/${code}?password=${encodeURIComponent(
+          password,
+        )}`,
+        { method: 'POST' },
+      );
 
       const contentType = response.headers.get('content-type') || '';
       if (contentType.includes('application/json')) {
