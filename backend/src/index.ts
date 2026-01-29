@@ -11,7 +11,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(','),
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key'],
     credentials: true,
