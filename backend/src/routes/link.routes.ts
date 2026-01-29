@@ -240,23 +240,37 @@ router.patch('/settings/developer/webhook', apiKeyAuth, async (req, res) => {
   }
 });
 
-router.post('/shorten', shortenLimiter, async (req, res, next) => {
-  // Try JWT auth first
-  const token = req.headers.authorization?.split(' ')[1];
-  if (token) {
-    try {
-      const { verifyToken } = await import('../services/auth.service');
-      const decoded = await verifyToken(token);
-      (req as any).user = decoded;
-      return shortenUrl(req, res);
-    } catch (error) {
-      // Fall back to API key auth
+router.post('/shorten', shortenLimiter, async (req, res) => {
+  try {
+    // 1. Try JWT auth first
+    const token = req.headers.authorization?.split(' ')[1];
+    if (token) {
+      try {
+        const { verifyToken } = await import('../services/auth.service');
+        const decoded = await verifyToken(token);
+        (req as any).user = decoded;
+        return await shortenUrl(req, res);
+      } catch {
+        // JWT failed, fall back to API key
+      }
     }
-  }
 
-  // Use API key auth as fallback
-  apiKeyAuth(req, res, () => shortenUrl(req, res));
+    // 2. API key auth (properly awaited)
+    await new Promise<void>((resolve, reject) => {
+      apiKeyAuth(req, res, (err?: any) => {
+        if (err) return reject(err);
+        resolve();
+      });
+    });
+
+    // 3. Call controller
+    return await shortenUrl(req, res);
+  } catch (err) {
+    console.error('Shorten error:', err);
+    return res.status(500).json({ error: 'Server error' });
+  }
 });
+
 
 router.post('/generate-key', keyGenerationLimiter, async (req, res) => {
   try {
