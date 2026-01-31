@@ -78,6 +78,6 @@ EXPOSE 5000
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["/usr/sbin/dumb-init", "--"]
 
-# Start with PM2 cluster mode (all CPU cores)
-# For single-core deployment, use: CMD ["node", "dist/index.js"]
-CMD ["pm2-runtime", "start", "ecosystem.config.js", "--no-daemon"]
+# Start with PM2 cluster mode (all CPU cores) if multiple cores, else direct Node
+# For Render.com (single core), it will run with node directly
+CMD if [ -n "$RENDER" ] && [ "$WEB_CONCURRENCY" -eq 1 ]; then node dist/index.js; else pm2-runtime start ecosystem.config.js --no-daemon; fi

@@ -1,11 +1,18 @@
 const os = require('os');
 
+// Detect environment and set appropriate instances
+const instances = process.env.WEB_CONCURRENCY
+  ? parseInt(process.env.WEB_CONCURRENCY)
+  : process.env.RENDER
+    ? 1
+    : 'max';
+
 module.exports = {
   apps: [
     {
       name: 'boltlink-api',
       script: './dist/index.js',
-      instances: 'max', // Use all available CPU cores
+      instances: instances, // Use all available CPU cores or 1 for single-core envs
       exec_mode: 'cluster',
       env: {
         NODE_ENV: 'development',
