@@ -41,9 +41,10 @@ WORKDIR /app
 COPY --from=builder /build/package.json ./
 COPY --from=builder /build/package-lock.json ./
 COPY --from=builder /build/ecosystem.config.js ./
+COPY start.sh ./
 
-# Install production dependencies (including PM2)
-RUN npm ci --omit=dev && \
+RUN chmod +x start.sh && \
+    npm ci --omit=dev && \
     npm install -g pm2 && \
     npm cache clean --force
 
@@ -78,6 +79,5 @@ EXPOSE 5000
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["/usr/sbin/dumb-init", "--"]
 
-# Start with PM2 cluster mode (all CPU cores) if multiple cores, else direct Node
-# For Render.com (single core), it will run with node directly
-CMD ["/bin/sh", "-c", "if [ -n \"$RENDER\" ] && [ \"$WEB_CONCURRENCY\" -eq 1 ]; then node dist/index.js; else pm2-runtime start ecosystem.config.js --no-daemon; fi"]
+# Use start script to determine single-core vs multi-core startup
+CMD ["./start.sh"]
