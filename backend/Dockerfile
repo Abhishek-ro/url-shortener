@@ -14,7 +14,7 @@ WORKDIR /build
 COPY package.json package-lock.json ./
 
 # Install dependencies (includes devDependencies)
-RUN npm ci --only=production && \
+RUN npm ci --omit=dev && \
     npm ci  # Also install devDependencies for building
 
 # Copy source code
@@ -43,7 +43,7 @@ COPY --from=builder /build/package-lock.json ./
 COPY --from=builder /build/ecosystem.config.js ./
 
 # Install production dependencies (including PM2)
-RUN npm ci --only=production && \
+RUN npm ci --omit=dev && \
     npm install -g pm2 && \
     npm cache clean --force
 
