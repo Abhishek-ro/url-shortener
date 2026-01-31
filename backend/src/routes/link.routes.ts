@@ -242,7 +242,6 @@ router.patch('/settings/developer/webhook', apiKeyAuth, async (req, res) => {
 
 router.post('/shorten', shortenLimiter, async (req, res) => {
   try {
-    // 1. Try JWT auth first
     const token = req.headers.authorization?.split(' ')[1];
     if (token) {
       try {

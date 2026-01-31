@@ -1,0 +1,4 @@
+- [ ] Replace window.location.origin with import.meta.env.VITE_API_URL in LinkCreator.tsx for QR code generation
+- [ ] Replace window.location.origin with import.meta.env.VITE_API_URL in LinkCreator.tsx for short link display
+- [ ] Replace window.location.origin with import.meta.env.VITE_API_URL in LinkCreator.tsx for copy functionality
+- [ ] Replace window.location.origin with import.meta.env.VITE_API_URL in LinkCreator.tsx for test link functionality

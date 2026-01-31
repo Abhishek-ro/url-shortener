@@ -11,17 +11,17 @@ RUN apk add --no-cache python3 make g++ cairo-dev jpeg-dev pango-dev giflib-dev
 WORKDIR /build
 
 # Copy package files
-COPY backend/package.json backend/package-lock.json ./
+COPY package.json package-lock.json ./
 
 # Install dependencies (includes devDependencies)
 RUN npm ci --only=production && \
     npm ci  # Also install devDependencies for building
 
 # Copy source code
-COPY backend/tsconfig.json ./
-COPY backend/src ./src
-COPY backend/prisma ./prisma
-COPY backend/ecosystem.config.js ./
+COPY tsconfig.json ./
+COPY src ./src
+COPY prisma ./prisma
+COPY ecosystem.config.js ./
 
 # Generate Prisma Client
 RUN npx prisma generate
@@ -38,7 +38,8 @@ RUN apk add --no-cache dumb-init postgresql-client redis
 WORKDIR /app
 
 # Copy package files from builder
-COPY --from=builder /build/package.json /build/package-lock.json ./
+COPY --from=builder /build/package.json ./
+COPY --from=builder /build/package-lock.json ./
 COPY --from=builder /build/ecosystem.config.js ./
 
 # Install production dependencies (including PM2)

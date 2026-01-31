@@ -11,7 +11,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: '*',
+    origin: (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(','),
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key'],
     credentials: true,
@@ -39,6 +39,7 @@ app.use('/api', linkRoutes);
 app.get('/:code', redirectUrl);
 
 const PORT = process.env.PORT || 5000;
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
