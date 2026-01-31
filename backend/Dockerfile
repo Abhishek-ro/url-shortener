@@ -80,4 +80,4 @@ ENTRYPOINT ["/usr/sbin/dumb-init", "--"]
 
 # Start with PM2 cluster mode (all CPU cores) if multiple cores, else direct Node
 # For Render.com (single core), it will run with node directly
-CMD if [ -n "$RENDER" ] && [ "$WEB_CONCURRENCY" -eq 1 ]; then node dist/index.js; else pm2-runtime start ecosystem.config.js --no-daemon; fi
+CMD ["/bin/sh", "-c", "if [ -n \"$RENDER\" ] && [ \"$WEB_CONCURRENCY\" -eq 1 ]; then node dist/index.js; else pm2-runtime start ecosystem.config.js --no-daemon; fi"]
