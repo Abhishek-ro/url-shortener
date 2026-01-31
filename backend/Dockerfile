@@ -1,4 +1,4 @@
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 RUN apk add --no-cache python3 make g++ cairo-dev jpeg-dev pango-dev giflib-dev
 WORKDIR /build
 COPY package.json package-lock.json ./
@@ -9,7 +9,7 @@ COPY . .
 RUN npm run build || npx tsc
 RUN npm prune --production
 
-FROM node:18-alpine
+FROM node:20-alpine
 RUN apk add --no-cache dumb-init postgresql-client redis
 WORKDIR /app
 COPY --from=builder /build/package.json ./
