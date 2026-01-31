@@ -1,93 +1,29 @@
-const os = require('os');
-
-// Detect environment and set appropriate instances
-const instances = process.env.WEB_CONCURRENCY
-  ? parseInt(process.env.WEB_CONCURRENCY)
-  : process.env.RENDER
-    ? 1
-    : 'max';
-
 module.exports = {
   apps: [
     {
       name: 'boltlink-api',
       script: './dist/index.js',
-      instances: instances, // Use all available CPU cores or 1 for single-core envs
-      exec_mode: 'cluster',
-      env: {
-        NODE_ENV: 'development',
-      },
-      env_production: {
-        NODE_ENV: 'production',
-      },
-      // Performance & reliability
-      max_memory_restart: '500M', // Restart instance if memory > 500MB
-      max_restarts: 10,
-      min_uptime: '10s',
-      autorestart: true,
-      watch: false, // Disable watch mode in production
-      ignore_watch: ['node_modules', 'dist', '.git', '.env'],
-      // Graceful shutdown
-      kill_timeout: 5000,
-      wait_ready: true,
-      listen_timeout: 3000,
-      shutdown_with_message: true,
-      // Logging
-      output: './logs/out.log',
-      error: './logs/error.log',
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      merge_logs: false,
-      // Advanced clustering
-      cwd: './',
-      interpreter: 'node',
-      interpreter_args: '--max_old_space_size=1024', // 1GB heap per worker
-      node_args: '--enable-source-maps',
-      // Health check (for load balancer)
-      instance_var: 'INSTANCE_ID',
+      instances: process.env.WEB_CONCURRENCY || 1,
+      exec_mode: 'fork',
+      wait_ready: true, // Crucial: Waits for the 'ready' signal from index.ts
+      listen_timeout: 5000,
+      max_memory_restart: '400M',
+      interpreter_args: '--max_old_space_size=350',
+      env_production: { NODE_ENV: 'production' },
     },
     {
       name: 'boltlink-aggregator',
       script: './dist/worker/aggregator.worker.js',
       instances: 1,
-      exec_mode: 'fork', // Single instance aggregator
-      env: {
-        NODE_ENV: 'development',
-      },
-      env_production: {
-        NODE_ENV: 'production',
-      },
-      max_memory_restart: '300M',
-      autorestart: true,
-      watch: false,
-      output: './logs/aggregator-out.log',
-      error: './logs/aggregator-error.log',
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      interpreter_args: '--max_old_space_size=512',
+      max_memory_restart: '200M',
+      interpreter_args: '--max_old_space_size=150',
     },
     {
       name: 'boltlink-worker',
       script: './dist/worker/analytics.worker.js',
       instances: 1,
-      exec_mode: 'fork',
-      env: {
-        NODE_ENV: 'development',
-      },
-      env_production: {
-        NODE_ENV: 'production',
-      },
-      max_memory_restart: '300M',
-      autorestart: true,
-      watch: false,
-      output: './logs/worker-out.log',
-      error: './logs/worker-error.log',
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      interpreter_args: '--max_old_space_size=512',
+      max_memory_restart: '200M',
+      interpreter_args: '--max_old_space_size=150',
     },
   ],
-
-  // Global settings
-  monitor_interval: 5000,
-  max_restarts: 10,
-  min_uptime: '10s',
-  autorestart: true,
 };
