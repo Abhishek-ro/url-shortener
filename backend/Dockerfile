@@ -10,7 +10,7 @@ RUN apk add --no-cache python3 make g++ cairo-dev jpeg-dev pango-dev giflib-dev
 
 WORKDIR /build
 
-# Copy package files
+
 COPY package.json package-lock.json ./
 
 # Install dependencies (includes devDependencies)
