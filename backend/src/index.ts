@@ -9,6 +9,9 @@ dotenv.config();
 
 const app = express();
 
+// Trust proxy for Express - needed for rate limiting and X-Forwarded-For headers
+app.set('trust proxy', 1);
+
 app.use(
   cors({
     origin: (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(','),
