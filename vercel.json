@@ -1,11 +1,14 @@
 {
   "version": 2,
-  "buildCommand": "npm ci && npm run build",
-  "outputDirectory": "dist",
+  "buildCommand": "cd frontend && npm ci && npm run build",
+  "outputDirectory": "frontend/dist",
+  "env": {
+    "VITE_API_URL": "@vite_api_url"
+  },
   "routes": [
     {
       "src": "^/api/(.*)",
-      "dest": "https://url-shortener-1-9268.onrender.com/api/$1"
+      "dest": "${VITE_API_URL}/api/$1"
     },
     {
       "src": "/(.*)",
