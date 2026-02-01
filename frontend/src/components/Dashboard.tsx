@@ -164,7 +164,7 @@ const Dashboard: React.FC<{ onNavigate: (v: View) => void }> = ({
                     </td>
                     <td className='py-3 px-4 text-center'>
                       <a
-                        href={`http://localhost:5000/api/${link.shortCode}`}
+                        href={`https://url-shortener-1-9268.onrender.com/api/${link.shortCode}`}
                         target='_blank'
                         rel='noopener noreferrer'
                         className='inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors'
