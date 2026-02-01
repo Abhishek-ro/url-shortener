@@ -1,11 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend && npm ci && npm run build",
-  "outputDirectory": "frontend/dist",
-  "env": {
-    "VITE_API_URL": "https://url-shortener-1-9268.onrender.com",
-    "VITE_FRONTEND_URL": "https://url-shortener-pearl-six.vercel.app"
-  },
+  "buildCommand": "npm ci && npm run build",
+  "outputDirectory": "dist",
   "routes": [
     {
       "src": "^/api/(.*)",
