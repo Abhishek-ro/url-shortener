@@ -1,10 +1,14 @@
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient({
-  log: ['query', 'error', 'warn'],
+  log:
+    process.env.NODE_ENV === 'production'
+      ? ['error', 'warn']
+      : ['query', 'error', 'warn'],
+  // Increase connection pool size for better concurrency
+  // Set via DATABASE_URL: postgresql://...?connection_limit=20
 });
 
-// Test connection on startup
 (async () => {
   try {
     await prisma.$executeRawUnsafe('SELECT 1');

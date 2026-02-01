@@ -18,22 +18,21 @@ export async function createShortLink(
 ) {
   const shortCode = await nanoid(8);
 
-  const meta = await scrapeMetadata(originalUrl);
-
   // Hash password if provided
   let hashedPassword = null;
   if (options?.isProtected && options?.password) {
     hashedPassword = await bcrypt.hash(options.password, 10);
   }
 
+  // Create link immediately without blocking on metadata scrape
   const link = await prisma.link.create({
     data: {
       userId: options?.userId || null,
       originalUrl,
       shortCode,
-      title: meta.title,
-      description: meta.description,
-      favicon: meta.favicon,
+      title: null,
+      description: null,
+      favicon: null,
       isProtected: options?.isProtected || false,
       password: hashedPassword,
       isExpiring: options?.isExpiring || false,
@@ -42,6 +41,30 @@ export async function createShortLink(
       maxClicksPerMin: options?.maxClicksPerMin || 100,
     },
   });
+
+  // Fetch metadata asynchronously in background (fire-and-forget)
+  scrapeMetadata(originalUrl)
+    .then((meta) => {
+      // Update link with metadata asynchronously
+      prisma.link
+        .update({
+          where: { id: link.id },
+          data: {
+            title: meta.title,
+            description: meta.description,
+            favicon: meta.favicon,
+          },
+        })
+        .catch((err) => {
+          console.error(
+            `Failed to update metadata for link ${link.id}:`,
+            err.message,
+          );
+        });
+    })
+    .catch((err) => {
+      console.error(`Metadata scrape failed for ${originalUrl}:`, err.message);
+    });
 
   return link;
 }
