@@ -6,6 +6,7 @@ async function aggregateDirtyLinks() {
     try {
       await redis.connect();
     } catch (err) {
+      console.error('❌ Failed to connect to Redis:', err);
       setTimeout(aggregateDirtyLinks, 5000);
       return;
     }
@@ -13,6 +14,12 @@ async function aggregateDirtyLinks() {
 
   while (true) {
     try {
+      // Ensure connection is still alive
+      if (!redis.isOpen) {
+        console.warn('⚠️  Redis connection closed, reconnecting...');
+        await redis.connect();
+      }
+
       const dirtyLinks = await redis.sMembers('dirty_links');
 
       if (dirtyLinks.length > 0) {
