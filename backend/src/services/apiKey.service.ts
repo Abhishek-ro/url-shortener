@@ -12,8 +12,6 @@ export async function generateApiKey() {
   await prisma.apiKey.create({
     data: { key: hashedKey },
   });
-
-  // Return raw key ONCE to user; they must store it (can't be retrieved again)
   return key;
 }
 

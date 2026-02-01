@@ -11,10 +11,15 @@ const prisma = new PrismaClient({
     console.log('✅ Database connected successfully');
   } catch (err) {
     console.error('❌ Database connection failed:', err);
-    console.error(
-      'DATABASE_URL:',
-      process.env.DATABASE_URL?.split('@')[1] || 'not set',
-    );
+    const dbUrl = process.env.DATABASE_URL;
+    if (dbUrl) {
+      const url = new URL(dbUrl);
+      console.error(
+        `DATABASE_URL: ${url.protocol}//${url.username}:***@${url.host}${url.pathname}`,
+      );
+    } else {
+      console.error('DATABASE_URL: not set');
+    }
   }
 })();
 
