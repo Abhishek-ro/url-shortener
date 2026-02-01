@@ -12,15 +12,37 @@ const app = express();
 // Trust proxy for Express - needed for rate limiting and X-Forwarded-For headers
 app.set('trust proxy', 1);
 
-app.use(
-  cors({
-    origin: (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(','),
+// CORS configuration: support explicit origin list or wildcard
+const allowedOriginsEnv =
+  process.env.ALLOWED_ORIGINS || 'http://localhost:3000';
+const corsOptions = (() => {
+  if (allowedOriginsEnv.trim() === '*') {
+    // When wildcard is used with credentials, echo back the request origin
+    return {
+      origin: (origin: any, callback: any) => callback(null, true),
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key'],
+      credentials: true,
+      maxAge: 3600,
+    };
+  }
+
+  const allowed = allowedOriginsEnv.split(',').map((s) => s.trim());
+  return {
+    origin: (origin: any, callback: any) => {
+      // Allow non-browser (curl/postman) requests when origin is undefined
+      if (!origin) return callback(null, true);
+      if (allowed.indexOf(origin) !== -1) return callback(null, true);
+      return callback(new Error('Not allowed by CORS'));
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key'],
     credentials: true,
     maxAge: 3600,
-  }),
-);
+  };
+})();
+
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 
 // Security headers
