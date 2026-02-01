@@ -3,14 +3,13 @@
   "buildCommand": "cd frontend && npm ci && npm run build",
   "outputDirectory": "frontend/dist",
   "env": {
-    "VITE_API_URL": "@vite_api_url",
-    "VITE_FRONTEND_URL": "@vite_frontend_url",
-    "VITE_GEMINI_KEY": "@vite_gemini_key"
+    "VITE_API_URL": "https://url-shortener-1-9268.onrender.com",
+    "VITE_FRONTEND_URL": "https://url-shortener-pearl-six.vercel.app"
   },
   "routes": [
     {
       "src": "^/api/(.*)",
-      "dest": "https://url-shortener-1-9268.onrender.com/api"
+      "dest": "https://url-shortener-1-9268.onrender.com/api/$1"
     },
     {
       "src": "/(.*)",
