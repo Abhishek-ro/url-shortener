@@ -28,7 +28,7 @@ Error: Command "vite build" exited with 127
   "routes": [
     {
       "src": "^/api/(.*)",
-      "dest": "https://your-backend-url/api/$1"
+      "dest": "https://url-shortener-1-9268.onrender.com/api"
     },
     {
       "src": "/(.*)",
