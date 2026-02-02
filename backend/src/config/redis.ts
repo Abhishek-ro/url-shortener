@@ -1,6 +1,6 @@
 import { createClient } from 'redis';
 
-const redis = createClient({
+const redisConfig: any = {
   url: process.env.REDIS_URL,
   socket: {
     reconnectStrategy: (retries: number) => {
@@ -13,7 +13,14 @@ const redis = createClient({
       return Math.min(retries * 50, 500);
     },
   },
-});
+};
+
+// If REDIS_PASSWORD is set separately, add it to config
+if (process.env.REDIS_PASSWORD) {
+  redisConfig.password = process.env.REDIS_PASSWORD;
+}
+
+const redis = createClient(redisConfig);
 
 let isConnected = false;
 
