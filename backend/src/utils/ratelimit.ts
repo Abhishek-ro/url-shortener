@@ -2,13 +2,24 @@ import rateLimit from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
 import redis from '../config/redis';
 
-const createStore = (prefix: string) =>
-  new RedisStore({
-    sendCommand: async (...args: string[]) => {
-      return await redis.sendCommand(args as unknown as string[]);
-    },
-    prefix,
-  });
+const createStore = (prefix: string) => {
+  try {
+    return new RedisStore({
+      sendCommand: async (...args: string[]) => {
+        try {
+          return await redis.sendCommand(args as unknown as string[]);
+        } catch (err) {
+          console.error(`Redis command failed for prefix ${prefix}:`, err);
+          throw err;
+        }
+      },
+      prefix,
+    });
+  } catch (err) {
+    console.error(`Failed to create RedisStore for ${prefix}:`, err);
+    throw err;
+  }
+};
 
 export const shortenLimiter = rateLimit({
   store: createStore('rl:shorten:'),
