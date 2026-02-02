@@ -1,25 +1,37 @@
 import rateLimit from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
-import redis from '../config/redis';
+import redis, { isConnected } from '../config/redis';
+
+const createStore = (prefix: string) =>
+  new RedisStore({
+    prefix,
+    sendCommand: (...args: string[]) => redis.sendCommand(args),
+  });
 
 export const shortenLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 50,
-  standardHeaders: true,
-  legacyHeaders: false,
-  store: new RedisStore({
-    sendCommand: (...args: string[]) => redis.sendCommand(args),
-  }),
-  message: { error: 'Too many shorten requests. Slow down.' },
+  store: createStore('rl:shorten:'),
+  windowMs: 5 * 60 * 1000,
+  max: 100,
+  message: { error: 'Too many requests, slow down.' },
+  skip: () => !isConnected,
 });
 
 export const redirectLimiter = rateLimit({
+  store: createStore('rl:redirect:'),
   windowMs: 60 * 1000,
-  max: 100,
+  max: 1000,
+  message: 'Too many requests from this IP.',
+  skip: () => !isConnected,
+});
+
+export const keyGenerationLimiter = rateLimit({
+  store: createStore('rl:keygen:'),
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: {
+    error: 'Too many API key generation attempts. Try again later.',
+  },
   standardHeaders: true,
   legacyHeaders: false,
-  store: new RedisStore({
-    sendCommand: (...args: string[]) => redis.sendCommand(args),
-  }),
-  message: 'Too many redirects. Try again later.',
+  skip: () => !isConnected,
 });

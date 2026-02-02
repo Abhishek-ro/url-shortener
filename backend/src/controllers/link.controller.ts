@@ -86,7 +86,7 @@ export async function redirectUrl(req: Request, res: Response) {
         console.log(
           '🔐 Link is password protected - redirecting to verification page',
         );
-        const verifyUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify?code=${code}`;
+        const verifyUrl = `${process.env.FRONTEND_URL}/verify?code=${code}`;
         return res.redirect(302, verifyUrl);
       }
 
@@ -106,7 +106,7 @@ export async function redirectUrl(req: Request, res: Response) {
         if (clicksInLastMinute >= cached.maxClicksPerMin) {
           console.log('❌ Rate limit exceeded!');
           return res.redirect(
-            `${process.env.FRONTEND_URL || 'http://localhost:3000'}/rate-limit?code=${code}`,
+            `${process.env.FRONTEND_URL}/rate-limit?code=${code}`,
           );
         }
       }
@@ -141,7 +141,7 @@ export async function redirectUrl(req: Request, res: Response) {
       console.log(
         '🔐 Link is password protected - redirecting to verification page',
       );
-      const verifyUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify?code=${code}`;
+      const verifyUrl = `${process.env.FRONTEND_URL}/verify?code=${code}`;
       return res.redirect(302, verifyUrl);
     }
 
@@ -161,7 +161,7 @@ export async function redirectUrl(req: Request, res: Response) {
       if (clicksInLastMinute >= link.maxClicksPerMin) {
         console.log('❌ Rate limit exceeded!');
         return res.redirect(
-          `${process.env.FRONTEND_URL || 'http://localhost:3000'}/rate-limit?code=${code}`,
+          `${process.env.FRONTEND_URL}/rate-limit?code=${code}`,
         );
       }
     }

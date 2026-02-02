@@ -137,7 +137,7 @@ router.get('/stats/overview', apiKeyAuth, async (req, res) => {
     });
 
     const pointsMap: Record<string, number> = {};
-    pointsData.forEach((p) => {
+    pointsData.forEach((p: { timestamp: Date; _count: { id: number } }) => {
       const day = p.timestamp.toISOString().split('T')[0];
       pointsMap[day] = (pointsMap[day] || 0) + p._count.id;
     });
@@ -270,7 +270,6 @@ router.post('/shorten', shortenLimiter, async (req, res) => {
   }
 });
 
-
 router.post('/generate-key', keyGenerationLimiter, async (req, res) => {
   try {
     const key = await generateApiKey();
@@ -329,7 +328,7 @@ router.get('/analytics/global', apiKeyAuth, async (req, res) => {
     });
 
     const dailyMap: Record<string, number> = {};
-    dailyResults.forEach((d) => {
+    dailyResults.forEach((d: { timestamp: Date; _count: { id: number } }) => {
       const day = d.timestamp.toISOString().split('T')[0];
       dailyMap[day] = (dailyMap[day] || 0) + d._count.id;
     });
@@ -340,11 +339,13 @@ router.get('/analytics/global', apiKeyAuth, async (req, res) => {
       region: topRegion,
     }));
 
-    const regionStats = regionResults.map((result) => ({
-      region: result.region,
-      clicks: result._count.id,
-      percentage: ((result._count.id / (totalClicks || 1)) * 100).toFixed(1),
-    }));
+    const regionStats = regionResults.map(
+      (result: { region: string | null; _count: { id: number } }) => ({
+        region: result.region,
+        clicks: result._count.id,
+        percentage: ((result._count.id / (totalClicks || 1)) * 100).toFixed(1),
+      }),
+    );
 
     res.json({
       summary: {

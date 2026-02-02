@@ -1,12 +1,12 @@
 import { createClient } from 'redis';
 
 const redis = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379',
+  url: process.env.REDIS_URL,
   socket: {
     reconnectStrategy: (retries: number) => {
       if (retries > 10) {
         console.warn(
-          '❌ Redis connection failed after 10 retries. Running in degraded mode.',
+          '⚠️ Redis failed after 10 retries. Running in degraded mode.',
         );
         return new Error('Max retries reached');
       }
@@ -18,26 +18,24 @@ const redis = createClient({
 let isConnected = false;
 
 redis.on('connect', () => {
-  console.log('✅ Redis connected');
+  console.log('🔌 Redis connecting...');
+});
+
+redis.on('ready', () => {
+  console.log('✅ Redis ready');
   isConnected = true;
 });
 
 redis.on('error', (err) => {
   if (!isConnected) {
-    console.warn('⚠️  Redis connection failed. Some features may be limited.');
+    console.warn('⚠️ Redis unavailable. Continuing without Redis.');
   } else {
-    console.error('❌ Redis error:', err);
+    console.error('❌ Redis runtime error:', err);
   }
 });
 
-redis.on('ready', () => {
-  isConnected = true;
-});
-
 redis.connect().catch(() => {
-  console.warn(
-    '⚠️  Running without Redis. Caching and rate-limiting disabled.',
-  );
+  console.warn('⚠️ Redis connection failed. Caching & rate-limit disabled.');
 });
 
 export default redis;
