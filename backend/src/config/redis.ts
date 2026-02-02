@@ -81,5 +81,18 @@ redis.connect().catch((err: any) => {
   }
 });
 
+// Handle all unhandled rejections from Redis to prevent app crash
+process.on('unhandledRejection', (reason: any) => {
+  if (
+    reason?.message?.includes('NOAUTH') ||
+    reason?.message?.includes('Authentication')
+  ) {
+    // Silently suppress Redis auth rejections - we handle them gracefully
+    return;
+  }
+  // Re-throw other unhandled rejections
+  throw reason;
+});
+
 export default redis;
 export { isConnected };

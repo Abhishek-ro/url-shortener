@@ -2,7 +2,27 @@ import rateLimit from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
 import redis from '../config/redis';
 
+// Flag to track if Redis is ready
+let redisReady = false;
+
+redis.on('ready', () => {
+  redisReady = true;
+  console.log('✅ Redis ready for rate limiting');
+});
+
+redis.on('error', () => {
+  redisReady = false;
+});
+
 const createStore = (prefix: string) => {
+  // Only use Redis if it's connected
+  if (!redisReady) {
+    console.warn(
+      `⚠️ Redis not ready, falling back to memory store for ${prefix}`,
+    );
+    return undefined; // Use default memory store
+  }
+
   try {
     return new RedisStore({
       sendCommand: async (...args: string[]) => {
@@ -17,7 +37,7 @@ const createStore = (prefix: string) => {
     });
   } catch (err) {
     console.error(`Failed to create RedisStore for ${prefix}:`, err);
-    throw err;
+    return undefined; // Fall back to memory store
   }
 };
 
@@ -27,6 +47,8 @@ export const shortenLimiter = rateLimit({
   max: 100,
   message: { error: 'Too many requests, slow down.' },
   skip: () => !redis.isOpen,
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 export const redirectLimiter = rateLimit({
@@ -35,6 +57,8 @@ export const redirectLimiter = rateLimit({
   max: 1000,
   message: 'Too many requests from this IP.',
   skip: () => !redis.isOpen,
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 export const keyGenerationLimiter = rateLimit({
@@ -44,7 +68,7 @@ export const keyGenerationLimiter = rateLimit({
   message: {
     error: 'Too many API key generation attempts. Try again later.',
   },
+  skip: () => !redis.isOpen,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: () => !redis.isOpen,
 });
