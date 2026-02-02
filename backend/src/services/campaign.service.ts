@@ -31,7 +31,7 @@ export async function getCampaignById(id: string) {
 
   const totalLinks = campaign.links.length;
   const totalClicks = campaign.links.reduce(
-    (sum, link) => sum + link.clicks,
+    (sum: number, link: { id: string; clicks: number }) => sum + link.clicks,
     0,
   );
 
@@ -55,14 +55,26 @@ export async function getAllCampaigns() {
     },
   });
 
-  return campaigns.map((c) => ({
-    id: c.id,
-    name: c.name,
-    description: c.description,
-    createdAt: c.createdAt.toISOString(),
-    totalLinks: c.links.length,
-    totalClicks: c.links.reduce((sum, link) => sum + link.clicks, 0),
-  }));
+  return campaigns.map(
+    (c: {
+      id: string;
+      name: string;
+      description?: string;
+      createdAt: Date;
+      links: { id: string; clicks: number }[];
+    }) => ({
+      id: c.id,
+      name: c.name,
+      description: c.description,
+      createdAt: c.createdAt.toISOString(),
+      totalLinks: c.links.length,
+      totalClicks: c.links.reduce(
+        (sum: number, link: { id: string; clicks: number }) =>
+          sum + link.clicks,
+        0,
+      ),
+    }),
+  );
 }
 
 export async function updateCampaign(
@@ -88,7 +100,7 @@ export async function updateCampaign(
 
   const totalLinks = campaign.links.length;
   const totalClicks = campaign.links.reduce(
-    (sum, link) => sum + link.clicks,
+    (sum: number, link: { id: string; clicks: number }) => sum + link.clicks,
     0,
   );
 

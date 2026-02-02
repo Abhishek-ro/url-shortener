@@ -13,10 +13,12 @@ export async function getAnalyticsForCode(shortCode: string) {
 
   // Daily clicks aggregation
   const dailyClicksMap: Record<string, number> = {};
-  link.analytics.forEach((event) => {
-    const day = event.timestamp.toISOString().slice(0, 10);
-    dailyClicksMap[day] = (dailyClicksMap[day] || 0) + 1;
-  });
+  link.analytics.forEach(
+    (event: { timestamp: Date; region?: string; userAgent?: string }) => {
+      const day = event.timestamp.toISOString().slice(0, 10);
+      dailyClicksMap[day] = (dailyClicksMap[day] || 0) + 1;
+    },
+  );
 
   const dailyClicks = Object.entries(dailyClicksMap).map(([date, count]) => ({
     date,
@@ -25,10 +27,12 @@ export async function getAnalyticsForCode(shortCode: string) {
 
   // Region analysis
   const regionMap: Record<string, number> = {};
-  link.analytics.forEach((event) => {
-    const region = event.region ?? 'UNKNOWN';
-    regionMap[region] = (regionMap[region] || 0) + 1;
-  });
+  link.analytics.forEach(
+    (event: { timestamp: Date; region?: string; userAgent?: string }) => {
+      const region = event.region ?? 'UNKNOWN';
+      regionMap[region] = (regionMap[region] || 0) + 1;
+    },
+  );
 
   const regions = Object.entries(regionMap)
     .sort((a, b) => b[1] - a[1])
@@ -42,10 +46,12 @@ export async function getAnalyticsForCode(shortCode: string) {
 
   // Device/UserAgent analysis
   const deviceMap: Record<string, number> = {};
-  link.analytics.forEach((event) => {
-    const ua = event.userAgent ?? 'UNKNOWN';
-    deviceMap[ua] = (deviceMap[ua] || 0) + 1;
-  });
+  link.analytics.forEach(
+    (event: { timestamp: Date; region?: string; userAgent?: string }) => {
+      const ua = event.userAgent ?? 'UNKNOWN';
+      deviceMap[ua] = (deviceMap[ua] || 0) + 1;
+    },
+  );
 
   const devices = Object.entries(deviceMap)
     .sort((a, b) => b[1] - a[1])

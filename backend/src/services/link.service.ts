@@ -55,14 +55,14 @@ export async function createShortLink(
             favicon: meta.favicon,
           },
         })
-        .catch((err) => {
+        .catch((err: Error) => {
           console.error(
             `Failed to update metadata for link ${link.id}:`,
             err.message,
           );
         });
     })
-    .catch((err) => {
+    .catch((err: Error) => {
       console.error(`Metadata scrape failed for ${originalUrl}:`, err.message);
     });
 

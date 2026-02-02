@@ -4,7 +4,9 @@ import redis from '../config/redis';
 
 const createStore = (prefix: string) =>
   new RedisStore({
-    client: redis,
+    sendCommand: async (...args: string[]) => {
+      return await redis.sendCommand(args as unknown as string[]);
+    },
     prefix,
   });
 
